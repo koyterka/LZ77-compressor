@@ -45,8 +45,8 @@ After decompressing a .bin file, the .txt decompressed file will be placed in th
  ```sh
 encoder.py test.txt -c 13 7
 ```
-compresses test.txt using window size 13, search window size 7.
+compresses test.txt using window size 13, search window size 7
  ```sh
-encoder.py test.bin -d 13 7
+encoder.py test.bin -d
 ```
-decompresses test.bin using window size 13, search window size 7.
+decompresses test.bin (no need to set window sizes, they are stored as metadata in compressed files)
