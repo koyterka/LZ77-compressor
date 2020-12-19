@@ -1,3 +1,4 @@
+import sys
 import time
 from bitarray import bitarray
 import pathlib
@@ -19,10 +20,11 @@ class LZ77_encoder:
             self.SEARCH_SIZE = min(search_size, self.SEARCH_SIZE)
 
         self.LOOKAHEAD_SIZE = self.WINDOW_SIZE - self.SEARCH_SIZE
-        print("Encoding with buffer size", self.WINDOW_SIZE,
-              "and search buffer size", self.SEARCH_SIZE, "\n\n")
 
     def encode(self, filename):
+        print("Compressing with buffer size", self.WINDOW_SIZE,
+              "and search buffer size", self.SEARCH_SIZE, "\n\n")
+
         def find_match(pointer):
             # trim data to buffer
             buffer = data_with_initial_search_buffer[pointer:pointer + self.WINDOW_SIZE]
@@ -74,7 +76,7 @@ class LZ77_encoder:
 
         # read data to be encoded
         try:
-            with open(TEST_PATH + filename + ".txt", 'rb') as input_file:
+            with open(TEST_PATH + filename, 'rb') as input_file:
                 data = input_file.read()
         except IOError:
             print('Could not open input file!')
@@ -108,18 +110,21 @@ class LZ77_encoder:
 
         # print("\nEncoding result: ", output_buffer)
 
-        with open(ENCODED_PATH + filename + ".bin", 'wb') as outfile:
+        with open(ENCODED_PATH + filename[:-4] + '.bin', 'wb') as outfile:
             outfile.write(output_buffer.tobytes())
             outfile.close()
 
         return filename
 
     def decode(self, filename):
+        print("Decompressing with buffer size", self.WINDOW_SIZE,
+              "and search buffer size", self.SEARCH_SIZE, "\n\n")
+
         # load all (P, C, S) from file
         thirds = []
 
         try:
-            with open(ENCODED_PATH + filename + '.bin', 'rb') as input_file:
+            with open(ENCODED_PATH + filename, 'rb') as input_file:
                 for byte in iter(lambda: input_file.read(3), b''):
                     thirds.append(byte)
 
@@ -183,20 +188,39 @@ class LZ77_encoder:
             outfile.write(current_string[self.SEARCH_SIZE:])
         outfile.close()
 
-        return outfile_name
+        return
 
 
-encoder = LZ77_encoder(window_size=13, search_size=7)
+def inform_about_args():
+    print("usage: encoder.py [file-name] [command] W S\n\nArguments:\n file-name\t\tname of the file you "
+          "want to compress/decompress\n command\t\tcommand to execute\n\nOptional arguments:\n"
+          " W\t\twindow size\n S\t\tsearch window size\n\nCommands:\n -c|--compress\t\t\tcompress the file\n "
+          "-d|--decompress \t\tdecompress the file\n\nExample: encoder.py test.txt -c 13 7\n\tcompresses test.txt "
+          "using window size 13, search window size 7.")
 
-start = time.time()
-encoded = encoder.encode("regular_test")
-end = time.time()
-enc_time = end - start
 
-start = time.time()
-decoded = encoder.decode(encoded)
-end = time.time()
-dec_time = end - start
+arg_n = len(sys.argv) - 1
+if arg_n > 1:
+    filename = sys.argv[1]
 
-print("Encoding time: ", enc_time)
-print("Decoding time: ", dec_time)
+    if arg_n > 3:
+        encoder = LZ77_encoder(window_size=int(sys.argv[3]), search_size=int(sys.argv[4]))
+    else: encoder = LZ77_encoder()
+
+    if sys.argv[2] in ('-c', '--compress'):
+        start = time.time()
+        encoded = encoder.encode(filename)
+        end = time.time()
+        enc_time = end - start
+        print("Encoding time: ", enc_time)
+
+    elif sys.argv[2] in ('-d', '--decompress'):
+        start = time.time()
+        decoded = encoder.decode(filename)
+        end = time.time()
+        dec_time = end - start
+        print("Decoding time: ", dec_time)
+
+    else: inform_about_args()
+
+else: inform_about_args()
