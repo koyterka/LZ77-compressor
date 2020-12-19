@@ -4,7 +4,9 @@ LZ77 algorithm implemented in python. Compresses .txt files into .bin files and 
 
 ## Deals with the trickiest repetition patterns!
 This implementation is capable of compressing matched pairs that pass the end of the search window. 
-In the example below, you can see in the last step that the match 'rarra' began at position 4, despite the search window length being only 7.
+In the example below, you can see in the last step that the match 'rarra' began at position 4, despite the search window length of 7.
+
+
 ![alt text](https://github.com/koyterka/LZ77-compressor/blob/master/exception.JPG)
 
 ## Getting started
