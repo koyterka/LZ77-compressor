@@ -14,12 +14,15 @@ class LZ77_encoder:
         # maximum window sizes
         self.WINDOW_SIZE = 510
         self.SEARCH_SIZE = 255
+        self.metadata = (0, 0, 0)
 
         if window_size > search_size >= 1:
             self.WINDOW_SIZE = min(window_size, self.WINDOW_SIZE)
             self.SEARCH_SIZE = min(search_size, self.SEARCH_SIZE)
 
         self.LOOKAHEAD_SIZE = self.WINDOW_SIZE - self.SEARCH_SIZE
+        if self.WINDOW_SIZE != 510:
+            self.metadata = (1, self.SEARCH_SIZE, self.LOOKAHEAD_SIZE)
 
     def encode(self, filename):
         print("Compressing with buffer size", self.WINDOW_SIZE,
@@ -92,10 +95,13 @@ class LZ77_encoder:
         data_with_initial_search_buffer = initial_search_buffer + data
 
         print("**************** ENCODING ******************")
-        # iterate through data
+        # add metadata to output
         output_buffer = bitarray(endian='big')
-        current_pointer = 0
+        for x in self.metadata:
+            output_buffer.frombytes(bytes([x >> 0]))
 
+        current_pointer = 0
+        # iterate through data
         while current_pointer < len(data):
             # find longest match for the lookahead buffer
             found_match = find_match(current_pointer)
@@ -114,7 +120,7 @@ class LZ77_encoder:
             outfile.write(output_buffer.tobytes())
             outfile.close()
 
-        return filename
+        return
 
     def decode(self, filename):
         print("Decompressing with buffer size", self.WINDOW_SIZE,
@@ -131,6 +137,16 @@ class LZ77_encoder:
         except IOError:
             print('Could not open input file ...')
             raise
+
+        # check metadata, look if the window sizes are not default
+        metadata = thirds[0][0].to_bytes(1, 'big')
+        if metadata != 0:
+            search_size = thirds[0][1].to_bytes(1, 'big')
+            self.SEARCH_SIZE = int.from_bytes(search_size, 'big')
+            lookahead_size = thirds[0][2].to_bytes(1, 'big')
+            self.LOOKAHEAD_SIZE = int.from_bytes(lookahead_size, 'big')
+            self.WINDOW_SIZE = self.LOOKAHEAD_SIZE + self.SEARCH_SIZE
+        del thirds[0]
 
         print("\n\n**************** DECODING ******************")
         current_string = ""
@@ -174,7 +190,9 @@ class LZ77_encoder:
             current_string += symbol
 
             print((offset, length, symbol), " -> ", current_string[len(current_string) - length - 1
-                  - self.SEARCH_SIZE:-(length + 1)].replace("\n", "\\n"), "|",
+                                                                   - self.SEARCH_SIZE:-(length + 1)].replace("\n",
+                                                                                                             "\\n"),
+                  "|",
                   current_string[-(length + 1):].replace("\n", "\\n"))
 
         # trim data if it ends with the "end of file" symbol
@@ -202,25 +220,26 @@ def inform_about_args():
 arg_n = len(sys.argv) - 1
 if arg_n > 1:
     filename = sys.argv[1]
-
-    if arg_n > 3:
-        encoder = LZ77_encoder(window_size=int(sys.argv[3]), search_size=int(sys.argv[4]))
-    else: encoder = LZ77_encoder()
+    encoder = LZ77_encoder()
 
     if sys.argv[2] in ('-c', '--compress'):
+        if arg_n > 3:
+            encoder = LZ77_encoder(window_size=int(sys.argv[3]), search_size=int(sys.argv[4]))
         start = time.time()
-        encoded = encoder.encode(filename)
+        encoder.encode(filename)
         end = time.time()
         enc_time = end - start
         print("Encoding time: ", enc_time)
 
     elif sys.argv[2] in ('-d', '--decompress'):
         start = time.time()
-        decoded = encoder.decode(filename)
+        encoder.decode(filename)
         end = time.time()
         dec_time = end - start
         print("Decoding time: ", dec_time)
 
-    else: inform_about_args()
+    else:
+        inform_about_args()
 
-else: inform_about_args()
+else:
+    inform_about_args()
