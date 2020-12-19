@@ -21,7 +21,7 @@ class LZ77_encoder:
             self.SEARCH_SIZE = min(search_size, self.SEARCH_SIZE)
 
         self.LOOKAHEAD_SIZE = self.WINDOW_SIZE - self.SEARCH_SIZE
-        if self.WINDOW_SIZE != 510:
+        if self.WINDOW_SIZE != 510 or self.SEARCH_SIZE != 255:
             self.metadata = (1, self.SEARCH_SIZE, self.LOOKAHEAD_SIZE)
 
     def encode(self, filename):
@@ -123,9 +123,6 @@ class LZ77_encoder:
         return
 
     def decode(self, filename):
-        print("Decompressing with buffer size", self.WINDOW_SIZE,
-              "and search buffer size", self.SEARCH_SIZE, "\n\n")
-
         # load all (P, C, S) from file
         thirds = []
 
@@ -147,8 +144,10 @@ class LZ77_encoder:
             self.LOOKAHEAD_SIZE = int.from_bytes(lookahead_size, 'big')
             self.WINDOW_SIZE = self.LOOKAHEAD_SIZE + self.SEARCH_SIZE
         del thirds[0]
-
+        print("Decompressing with buffer size", self.WINDOW_SIZE,
+              "and search buffer size", self.SEARCH_SIZE, "\n\n")
         print("\n\n**************** DECODING ******************")
+
         current_string = ""
 
         # fill search buffer with first symbol
@@ -201,7 +200,7 @@ class LZ77_encoder:
 
         print("\nDecoding result:", current_string[self.SEARCH_SIZE:], '\n\n')
 
-        outfile_name = filename + ".txt"
+        outfile_name = filename[:-4] + ".txt"
         with open(DECODED_PATH + outfile_name, 'w') as outfile:
             outfile.write(current_string[self.SEARCH_SIZE:])
         outfile.close()
