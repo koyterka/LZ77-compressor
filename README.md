@@ -35,6 +35,7 @@ After decompressing a .bin file, the .txt decompressed file will be placed in th
  W              window size
  S              search window size
   ```
+  Note: default (and maximum) window size and search window size is 510 and 255. Passing incorrect window sizes as arguments will result in compressor using default sizes.
 
 ### Commands:
  ```sh
