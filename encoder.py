@@ -18,7 +18,8 @@ class LZ77_encoder:
 
         if window_size > search_size >= 1:
             self.WINDOW_SIZE = min(window_size, self.WINDOW_SIZE)
-            self.SEARCH_SIZE = min(search_size, self.SEARCH_SIZE)
+            if search_size >= self.WINDOW_SIZE - 255:
+                self.SEARCH_SIZE = min(search_size, self.SEARCH_SIZE)
 
         self.LOOKAHEAD_SIZE = self.WINDOW_SIZE - self.SEARCH_SIZE
         if self.WINDOW_SIZE != 510 or self.SEARCH_SIZE != 255:
